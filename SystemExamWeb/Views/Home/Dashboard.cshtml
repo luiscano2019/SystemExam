@@ -1,0 +1,51 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Dashboard</h1>
+                <a href="@Url.Action("Logout", "Auth")" class="btn btn-outline-danger">Cerrar Sesión</a>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Información del Usuario</h5>
+                            <p class="card-text">
+                                <strong>Email:</strong> @ViewBag.UserEmail<br>
+                                <strong>Rol:</strong> @ViewBag.UserRole
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Bienvenido al Sistema de Exámenes</h5>
+                            <p class="card-text">
+                                Has iniciado sesión correctamente. Aquí puedes gestionar exámenes, usuarios y ver estadísticas.
+                            </p>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <a href="#" class="btn btn-primary">Gestionar Exámenes</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <a href="#" class="btn btn-success">Ver Estadísticas</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
