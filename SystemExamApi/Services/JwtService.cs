@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace MiApp.Services
+namespace SystemExamApi.Services
 {
     public class JwtService
     {
@@ -14,10 +14,11 @@ namespace MiApp.Services
             _config = config;
         }
 
-        public string GenerateToken(string username, string rol)
+        public string GenerateToken(Guid userId, string username, string rol)
         {
             var claims = new[]
             {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.Role, rol)
             };

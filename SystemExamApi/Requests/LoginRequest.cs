@@ -1,4 +1,4 @@
-﻿namespace SystemExamApi.DTOs
+﻿namespace SystemExamApi.Requests
 {
     public class LoginRequest
     {

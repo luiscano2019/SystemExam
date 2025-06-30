@@ -1,6 +1,6 @@
 ﻿using SystemExamApi.Models;
 
-namespace SystemExamApi.DTOs
+namespace SystemExamApi.Requests
 {
     public class RegisterRequest
     {

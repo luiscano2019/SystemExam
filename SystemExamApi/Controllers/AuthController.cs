@@ -1,13 +1,15 @@
-﻿using MiApp.Services;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using SystemExamApi.DTOs;
+
 using SystemExamApi.Models;
+using SystemExamApi.Requests;
+using SystemExamApi.Responses;
+using SystemExamApi.Services;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -56,7 +58,7 @@ public class AuthController : ControllerBase
         if (user == null)
             return Unauthorized(new { mensaje = "Credenciales incorrectas" });
 
-        var token = _jwt.GenerateToken(user.Name, user.UserRole.GetDescription());
+        var token = _jwt.GenerateToken(user.Id, user.Name, user.UserRole.GetDescription());
 
         return Ok(new LoginResponse
         {
