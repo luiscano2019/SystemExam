@@ -1,17 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
-using SystemExamWeb.Models;
+using System.Text.Json;
 using SystemExamWeb.Filters;
+using SystemExamWeb.Helpers;
+using SystemExamWeb.Models;
+using SystemExamWeb.Responses;
 
 namespace SystemExamWeb.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+       
+        private readonly string _apiBaseUrl;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IConfiguration config)
         {
-            _logger = logger;
+         
+            _apiBaseUrl = config.GetSection("ApiSettings:BaseUrl").Value!;
         }
 
         public IActionResult Index()
@@ -25,13 +31,46 @@ namespace SystemExamWeb.Controllers
         }
 
         [RequireAuth]
-        public IActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
-            // Aquí podrías leer información del usuario desde el token JWT
-            ViewBag.UserEmail = "usuario@ejemplo.com";
-            ViewBag.UserRole = "admin";
-            
-            return View();
+            var model = new DashboardViewModel();
+            var errorMessages = new List<string>();
+            var apiUrl = $"{_apiBaseUrl}/api/Category";
+
+            try
+            {
+                var token = TokenHelper.GetJwtToken(Request);
+                using var httpClient = new HttpClient();
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
+
+                var response = await httpClient.GetAsync(apiUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<IEnumerable<CategoryResponse>>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    model.Categories = apiResponse?.Data?.ToList() ?? new List<CategoryResponse>();
+                }
+                else
+                {
+                    errorMessages.Add($"Error al obtener categorías: {response.StatusCode} - {response.ReasonPhrase}");
+                    model.Categories = new List<CategoryResponse>();
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessages.Add($"Excepción: {ex.Message}");
+                model.Categories = new List<CategoryResponse>();
+            }
+
+            return View(model);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

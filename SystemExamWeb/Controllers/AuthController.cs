@@ -8,6 +8,14 @@ namespace SystemExamWeb.Controllers
 {
     public class AuthController : Controller
     {
+        private readonly string _apiBaseUrl;
+
+        public AuthController(IConfiguration config)
+        {
+            _apiBaseUrl = config.GetSection("ApiSettings:BaseUrl").Value!;
+        }
+
+
         public IActionResult Login()
         {
             // Si ya está autenticado, redirigir al dashboard
@@ -32,19 +40,26 @@ namespace SystemExamWeb.Controllers
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var httpClient = new HttpClient();
-            // Cambia la URL por la de tu API real
-            var apiUrl = "http://localhost:5272/api/Auth/login";
-            
+            var apiUrl = $"{_apiBaseUrl}/api/Auth/login";
+
+
             try
             {
                 var response = await httpClient.PostAsync(apiUrl, content);
-                if (response.IsSuccessStatusCode)
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                // Procesar la estructura ApiResponse<LoginResponse>
+                using var doc = JsonDocument.Parse(responseBody);
+                var root = doc.RootElement;
+
+                bool success = root.GetProperty("success").GetBoolean();
+                string? message = root.GetProperty("message").GetString();
+
+                if (success)
                 {
-                    var responseBody = await response.Content.ReadAsStringAsync();
-                    // Leer el token del JSON de respuesta
-                    using var doc = JsonDocument.Parse(responseBody);
-                    var token = doc.RootElement.GetProperty("token").GetString();
-                    
+                    var data = root.GetProperty("data");
+                    var token = data.GetProperty("token").GetString();
+
                     // Guardar el token en una cookie segura
                     Response.Cookies.Append(
                         "jwt_token",
@@ -62,7 +77,16 @@ namespace SystemExamWeb.Controllers
                 }
                 else
                 {
-                    ViewBag.ErrorMessage = "Credenciales incorrectas o error de autenticación.";
+                    // Mostrar mensaje de error de la API
+                    if (root.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array)
+                    {
+                        var firstError = errors.EnumerateArray().FirstOrDefault().GetString();
+                        ViewBag.ErrorMessage = firstError ?? message ?? "Credenciales incorrectas o error de autenticación.";
+                    }
+                    else
+                    {
+                        ViewBag.ErrorMessage = message ?? "Credenciales incorrectas o error de autenticación.";
+                    }
                 }
             }
             catch (HttpRequestException)
@@ -83,4 +107,6 @@ namespace SystemExamWeb.Controllers
             return RedirectToAction("Login");
         }
     }
-} 
+}
+
+

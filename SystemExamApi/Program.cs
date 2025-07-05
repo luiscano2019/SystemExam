@@ -8,13 +8,27 @@ using SystemExamApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+// Configura CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWebApp",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:7272") // Cambia el puerto si tu frontend usa otro
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
 // Configure Entity Framework
 builder.Services.AddDbContext<ExamSystemDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register services
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
+
 builder.Services.AddScoped<RoleService>();
 
 builder.Services.AddControllers();
@@ -82,14 +96,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    //app.UseSwaggerUI(c =>
-    //{
-    //    c.SwaggerEndpoint("/swagger/v1/swagger.json", "System Exam v1");
-    //    c.RoutePrefix = string.Empty; // Opcional: muestra Swagger en la raíz
-    //});
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowWebApp"); // Debe ir antes de UseAuthentication y UseAuthorization
+
 
 app.UseAuthentication(); // 👈 Importante: antes de UseAuthorization
 app.UseAuthorization();

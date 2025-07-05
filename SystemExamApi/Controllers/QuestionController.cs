@@ -21,14 +21,20 @@ public class QuestionController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<QuestionResponse>> GetQuestion(Guid id)
+    public async Task<ActionResult<ApiResponse<QuestionResponse>>> GetQuestion(Guid id)
     {
         var question = await _context.Questions
             .Include(q => q.QuestionOptions)
             .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == id);
         if (question == null)
-            return NotFound(new { message = "Pregunta no encontrada" });
+            return NotFound(new ApiResponse<QuestionResponse>
+            {
+                Success = false,
+                Message = "Pregunta no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una pregunta con el ID proporcionado." }
+            });
 
         var response = new QuestionResponse
         {
@@ -52,19 +58,37 @@ public class QuestionController : ControllerBase
                 UpdatedAt = opt.UpdatedAt
             }).ToList()
         };
-        return Ok(response);
+        return Ok(new ApiResponse<QuestionResponse>
+        {
+            Success = true,
+            Message = "Pregunta obtenida correctamente.",
+            Data = response,
+            Errors = null
+        });
     }
 
     [HttpPost]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<QuestionResponse>> CreateQuestion([FromBody] CreateQuestionRequest request)
+    public async Task<ActionResult<ApiResponse<QuestionResponse>>> CreateQuestion([FromBody] CreateQuestionRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new ApiResponse<QuestionResponse>
+            {
+                Success = false,
+                Message = "Datos de entrada inválidos.",
+                Data = null,
+                Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
 
         var examExists = await _context.Exams.AnyAsync(e => e.Id == request.ExamId);
         if (!examExists)
-            return BadRequest(new { message = "El examen especificado no existe." });
+            return BadRequest(new ApiResponse<QuestionResponse>
+            {
+                Success = false,
+                Message = "El examen especificado no existe.",
+                Data = null,
+                Errors = new[] { "No existe un examen con el ID proporcionado." }
+            });
 
         var question = new Question
         {
@@ -121,19 +145,37 @@ public class QuestionController : ControllerBase
                 UpdatedAt = opt.UpdatedAt
             }).ToList()
         };
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, response);
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, new ApiResponse<QuestionResponse>
+        {
+            Success = true,
+            Message = "Pregunta creada exitosamente.",
+            Data = response,
+            Errors = null
+        });
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> UpdateQuestion(Guid id, [FromBody] UpdateQuestionRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateQuestion(Guid id, [FromBody] UpdateQuestionRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Datos de entrada inválidos.",
+                Data = null,
+                Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
 
         var question = await _context.Questions.Include(q => q.QuestionOptions).FirstOrDefaultAsync(q => q.Id == id);
         if (question == null)
-            return NotFound(new { message = "Pregunta no encontrada" });
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Pregunta no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una pregunta con el ID proporcionado." }
+            });
 
         question.Text = request.Text;
         question.Type = request.Type;
@@ -162,20 +204,38 @@ public class QuestionController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Pregunta actualizada exitosamente.",
+            Data = null,
+            Errors = null
+        });
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> DeleteQuestion(Guid id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteQuestion(Guid id)
     {
         var question = await _context.Questions.Include(q => q.QuestionOptions).FirstOrDefaultAsync(q => q.Id == id);
         if (question == null)
-            return NotFound(new { message = "Pregunta no encontrada" });
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Pregunta no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una pregunta con el ID proporcionado." }
+            });
 
         _context.QuestionOptions.RemoveRange(question.QuestionOptions);
         _context.Questions.Remove(question);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Pregunta eliminada exitosamente.",
+            Data = null,
+            Errors = null
+        });
     }
 } 

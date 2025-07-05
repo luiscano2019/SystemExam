@@ -20,11 +20,17 @@ public class QuestionOptionController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<QuestionOptionResponse>> GetOption(Guid id)
+    public async Task<ActionResult<ApiResponse<QuestionOptionResponse>>> GetOption(Guid id)
     {
         var option = await _context.QuestionOptions.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
         if (option == null)
-            return NotFound(new { message = "Opción no encontrada" });
+            return NotFound(new ApiResponse<QuestionOptionResponse>
+            {
+                Success = false,
+                Message = "Opción no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una opción con el ID proporcionado." }
+            });
 
         var response = new QuestionOptionResponse
         {
@@ -35,19 +41,37 @@ public class QuestionOptionController : ControllerBase
             CreatedAt = option.CreatedAt,
             UpdatedAt = option.UpdatedAt
         };
-        return Ok(response);
+        return Ok(new ApiResponse<QuestionOptionResponse>
+        {
+            Success = true,
+            Message = "Opción obtenida correctamente.",
+            Data = response,
+            Errors = null
+        });
     }
 
     [HttpPost]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<QuestionOptionResponse>> CreateOption([FromBody] CreateQuestionOptionRequest request)
+    public async Task<ActionResult<ApiResponse<QuestionOptionResponse>>> CreateOption([FromBody] CreateQuestionOptionRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new ApiResponse<QuestionOptionResponse>
+            {
+                Success = false,
+                Message = "Datos de entrada inválidos.",
+                Data = null,
+                Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
 
         var question = await _context.Questions.FirstOrDefaultAsync(q => q.Id == request.QuestionId);
         if (question == null)
-            return BadRequest(new { message = "La pregunta especificada no existe." });
+            return BadRequest(new ApiResponse<QuestionOptionResponse>
+            {
+                Success = false,
+                Message = "La pregunta especificada no existe.",
+                Data = null,
+                Errors = new[] { "No existe una pregunta con el ID proporcionado." }
+            });
 
         var option = new QuestionOption
         {
@@ -72,23 +96,47 @@ public class QuestionOptionController : ControllerBase
             CreatedAt = option.CreatedAt,
             UpdatedAt = option.UpdatedAt
         };
-        return CreatedAtAction(nameof(GetOption), new { id = option.Id }, response);
+        return CreatedAtAction(nameof(GetOption), new { id = option.Id }, new ApiResponse<QuestionOptionResponse>
+        {
+            Success = true,
+            Message = "Opción creada exitosamente.",
+            Data = response,
+            Errors = null
+        });
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> UpdateOption(Guid id, [FromBody] UpdateQuestionOptionRequest request)
+    public async Task<ActionResult<ApiResponse<object>>> UpdateOption(Guid id, [FromBody] UpdateQuestionOptionRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Datos de entrada inválidos.",
+                Data = null,
+                Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
 
         var option = await _context.QuestionOptions.FirstOrDefaultAsync(o => o.Id == id);
         if (option == null)
-            return NotFound(new { message = "Opción no encontrada" });
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Opción no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una opción con el ID proporcionado." }
+            });
 
         var question = await _context.Questions.FirstOrDefaultAsync(q => q.Id == request.QuestionId);
         if (question == null)
-            return BadRequest(new { message = "La pregunta especificada no existe." });
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "La pregunta especificada no existe.",
+                Data = null,
+                Errors = new[] { "No existe una pregunta con el ID proporcionado." }
+            });
 
         option.QuestionId = request.QuestionId;
         option.Text = request.Text;
@@ -97,19 +145,37 @@ public class QuestionOptionController : ControllerBase
         option.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Opción actualizada exitosamente.",
+            Data = null,
+            Errors = null
+        });
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> DeleteOption(Guid id)
+    public async Task<ActionResult<ApiResponse<object>>> DeleteOption(Guid id)
     {
         var option = await _context.QuestionOptions.FirstOrDefaultAsync(o => o.Id == id);
         if (option == null)
-            return NotFound(new { message = "Opción no encontrada" });
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Opción no encontrada.",
+                Data = null,
+                Errors = new[] { "No existe una opción con el ID proporcionado." }
+            });
 
         _context.QuestionOptions.Remove(option);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Opción eliminada exitosamente.",
+            Data = null,
+            Errors = null
+        });
     }
 } 

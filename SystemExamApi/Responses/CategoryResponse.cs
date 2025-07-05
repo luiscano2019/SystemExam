@@ -1,3 +1,5 @@
+using System;
+
 namespace SystemExamApi.Responses;
 
 public class CategoryResponse
@@ -9,5 +11,4 @@ public class CategoryResponse
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
-    public int ExamCount { get; set; }
 }

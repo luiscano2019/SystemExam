@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SystemExamApi.Models;
+using SystemExamApi.Responses;
 
 namespace SystemExamApi.Controllers
 {
@@ -22,49 +23,81 @@ namespace SystemExamApi.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<ApiResponse<IEnumerable<User>>>> GetUsers()
         {
             try
             {
                 var users = await _context.Users.ToListAsync();
-                return Ok(users);
+                return Ok(new ApiResponse<IEnumerable<User>>
+                {
+                    Success = true,
+                    Message = "Usuarios obtenidos correctamente.",
+                    Data = users,
+                    Errors = null
+                });
             }
             catch (Exception ex)
             {
-                // Log del error para debugging
-                return StatusCode(500, new { 
-                    message = "Error al obtener la lista de usuarios",
-                    error = ex.Message
+                return StatusCode(500, new ApiResponse<IEnumerable<User>>
+                {
+                    Success = false,
+                    Message = "Error al obtener la lista de usuarios.",
+                    Data = null,
+                    Errors = new[] { ex.Message }
                 });
             }
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(Guid id)
+        public async Task<ActionResult<ApiResponse<User>>> GetUser(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                return NotFound(new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado.",
+                    Data = null,
+                    Errors = new[] { "No existe un usuario con el ID proporcionado." }
+                });
             }
-            return user;
+            return Ok(new ApiResponse<User>
+            {
+                Success = true,
+                Message = "Usuario obtenido correctamente.",
+                Data = user,
+                Errors = null
+            });
         }
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(Guid id, User user)
+        public async Task<ActionResult<ApiResponse<User>>> PutUser(Guid id, User user)
         {
             if (id != user.Id)
             {
-                return BadRequest("El ID en la URL no coincide con el ID del usuario");
+                return BadRequest(new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = "El ID en la URL no coincide con el ID del usuario.",
+                    Data = null,
+                    Errors = new[] { "El ID en la URL no coincide con el ID del usuario." }
+                });
             }
 
             // Validar que el usuario existe
             var existingUser = await _context.Users.FindAsync(id);
             if (existingUser == null)
             {
-                return NotFound("Usuario no encontrado");
+                return NotFound(new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado.",
+                    Data = null,
+                    Errors = new[] { "No existe un usuario con el ID proporcionado." }
+                });
             }
 
             // Validar que el email sea único (si se está cambiando)
@@ -73,7 +106,13 @@ namespace SystemExamApi.Controllers
                 var emailExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
                 if (emailExists)
                 {
-                    return BadRequest("El email ya está en uso por otro usuario");
+                    return BadRequest(new ApiResponse<User>
+                    {
+                        Success = false,
+                        Message = "El email ya está en uso por otro usuario.",
+                        Data = null,
+                        Errors = new[] { "El email ya está en uso por otro usuario." }
+                    });
                 }
             }
 
@@ -83,14 +122,26 @@ namespace SystemExamApi.Controllers
                 var dniExists = await _context.Users.AnyAsync(u => u.Dni == user.Dni);
                 if (dniExists)
                 {
-                    return BadRequest("El DNI ya está en uso por otro usuario");
+                    return BadRequest(new ApiResponse<User>
+                    {
+                        Success = false,
+                        Message = "El DNI ya está en uso por otro usuario.",
+                        Data = null,
+                        Errors = new[] { "El DNI ya está en uso por otro usuario." }
+                    });
                 }
             }
 
             // Validar el rol usando el enum
             if (!UserRoleExtensions.IsValidRole(user.UserRole.GetDescription()))
             {
-                return BadRequest($"El rol debe ser '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'");
+                return BadRequest(new ApiResponse<User>
+                {
+                    Success = false,
+                    Message = $"El rol debe ser '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'",
+                    Data = null,
+                    Errors = new[] { "Rol inválido." }
+                });
             }
 
             // Actualizar solo los campos permitidos
@@ -113,13 +164,25 @@ namespace SystemExamApi.Controllers
             try
             {
                 await _context.SaveChangesAsync();
-                return Ok(existingUser);
+                return Ok(new ApiResponse<User>
+                {
+                    Success = true,
+                    Message = "Usuario actualizado exitosamente.",
+                    Data = existingUser,
+                    Errors = null
+                });
             }
             catch (DbUpdateConcurrencyException)
             {
                 if (!UserExists(id))
                 {
-                    return NotFound("Usuario no encontrado");
+                    return NotFound(new ApiResponse<User>
+                    {
+                        Success = false,
+                        Message = "Usuario no encontrado.",
+                        Data = null,
+                        Errors = new[] { "No existe un usuario con el ID proporcionado." }
+                    });
                 }
                 else
                 {
@@ -130,21 +193,33 @@ namespace SystemExamApi.Controllers
 
         // POST: api/Users
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser([FromBody] User user)
+        public async Task<ActionResult<ApiResponse<object>>> PostUser([FromBody] User user)
         {
             try
             {
                 // Validar que el modelo sea válido
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ModelState);
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "Datos de entrada inválidos.",
+                        Data = null,
+                        Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+                    });
                 }
 
                 // Validar que el email no esté en uso
                 var emailExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
                 if (emailExists)
                 {
-                    return BadRequest("El email ya está en uso por otro usuario");
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "El email ya está en uso por otro usuario.",
+                        Data = null,
+                        Errors = new[] { "El email ya está en uso por otro usuario." }
+                    });
                 }
 
                 // Validar que el DNI no esté en uso (si se proporciona)
@@ -153,14 +228,26 @@ namespace SystemExamApi.Controllers
                     var dniExists = await _context.Users.AnyAsync(u => u.Dni == user.Dni);
                     if (dniExists)
                     {
-                        return BadRequest("El DNI ya está en uso por otro usuario");
+                        return BadRequest(new ApiResponse<object>
+                        {
+                            Success = false,
+                            Message = "El DNI ya está en uso por otro usuario.",
+                            Data = null,
+                            Errors = new[] { "El DNI ya está en uso por otro usuario." }
+                        });
                     }
                 }
 
                 // Validar el rol usando el enum
                 if (!UserRoleExtensions.IsValidRole(user.UserRole.GetDescription()))
                 {
-                    return BadRequest($"El rol debe ser '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'");
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = $"El rol debe ser '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'",
+                        Data = null,
+                        Errors = new[] { "Rol inválido." }
+                    });
                 }
 
                 // Validar que no se cree un admin si ya hay uno (opcional - para limitar admins)
@@ -169,7 +256,13 @@ namespace SystemExamApi.Controllers
                     var adminCount = await _context.Users.CountAsync(u => u.UserRole == UserRole.Admin && u.IsActive);
                     if (adminCount >= 5) // Límite de 5 administradores
                     {
-                        return BadRequest("Se ha alcanzado el límite máximo de administradores (5)");
+                        return BadRequest(new ApiResponse<object>
+                        {
+                            Success = false,
+                            Message = "Se ha alcanzado el límite máximo de administradores (5)",
+                            Data = null,
+                            Errors = new[] { "Límite de administradores alcanzado." }
+                        });
                     }
                 }
 
@@ -202,27 +295,39 @@ namespace SystemExamApi.Controllers
                     user.UpdatedAt
                 };
 
-                return CreatedAtAction(nameof(GetUser), new { id = user.Id }, createdUser);
+                return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "Usuario creado exitosamente.",
+                    Data = createdUser,
+                    Errors = null
+                });
             }
             catch (DbUpdateException ex)
             {
-                return StatusCode(500, new { 
-                    message = "Error al crear el usuario en la base de datos",
-                    error = ex.InnerException?.Message ?? ex.Message
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Error al crear el usuario en la base de datos.",
+                    Data = null,
+                    Errors = new[] { ex.InnerException?.Message ?? ex.Message }
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
-                    message = "Error inesperado al crear el usuario",
-                    error = ex.Message
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Error inesperado al crear el usuario.",
+                    Data = null,
+                    Errors = new[] { ex.Message }
                 });
             }
         }
 
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(Guid id)
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUser(Guid id)
         {
             // Buscar el usuario con sus relaciones de estudiante
             var user = await _context.Users
@@ -232,7 +337,13 @@ namespace SystemExamApi.Controllers
 
             if (user == null)
             {
-                return NotFound("Usuario no encontrado");
+                return NotFound(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado.",
+                    Data = null,
+                    Errors = new[] { "No existe un usuario con el ID proporcionado." }
+                });
             }
 
             // Validar que no se elimine el último admin usando el enum
@@ -241,7 +352,13 @@ namespace SystemExamApi.Controllers
                 var adminCount = await _context.Users.CountAsync(u => u.UserRole == UserRole.Admin && u.IsActive);
                 if (adminCount <= 1)
                 {
-                    return BadRequest("No se puede eliminar el último administrador del sistema");
+                    return BadRequest(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "No se puede eliminar el último administrador del sistema.",
+                        Data = null,
+                        Errors = new[] { "No se puede eliminar el último administrador del sistema." }
+                    });
                 }
             }
 
@@ -249,7 +366,13 @@ namespace SystemExamApi.Controllers
             var hasCreatedExams = await _context.Exams.AnyAsync(e => e.CreatedBy == id);
             if (hasCreatedExams)
             {
-                return BadRequest("No se puede eliminar un usuario que ha creado exámenes. Use el método DELETE completo para administradores.");
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "No se puede eliminar un usuario que ha creado exámenes. Use el método DELETE completo para administradores.",
+                    Data = null,
+                    Errors = new[] { "No se puede eliminar un usuario que ha creado exámenes." }
+                });
             }
 
             try
@@ -276,25 +399,31 @@ namespace SystemExamApi.Controllers
                 
                 await _context.SaveChangesAsync();
 
-                return Ok(new { 
-                    message = "Estudiante eliminado exitosamente",
-                    deletedUser = new {
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "Estudiante eliminado exitosamente.",
+                    Data = new {
                         id = user.Id,
                         name = user.Name,
                         email = user.Email,
-                        role = user.UserRole.GetDescription()
+                        role = user.UserRole.GetDescription(),
+                        deletedRelations = new {
+                            examAttempts = user.ExamAttempts.Count,
+                            examAnswers = studentExamAnswers.Count
+                        }
                     },
-                    deletedRelations = new {
-                        examAttempts = user.ExamAttempts.Count,
-                        examAnswers = studentExamAnswers.Count
-                    }
+                    Errors = null
                 });
             }
             catch (DbUpdateException ex)
             {
-                return StatusCode(500, new { 
-                    message = "Error al eliminar el estudiante y sus relaciones.",
-                    error = ex.InnerException?.Message ?? ex.Message
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Error al eliminar el estudiante y sus relaciones.",
+                    Data = null,
+                    Errors = new[] { ex.InnerException?.Message ?? ex.Message }
                 });
             }
         }

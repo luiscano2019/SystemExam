@@ -5,6 +5,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Linq;
 
 using SystemExamApi.Models;
 using SystemExamApi.Requests;
@@ -25,45 +26,72 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public IActionResult Register([FromBody] User usuario)
+    public ActionResult<ApiResponse<object>> Register([FromBody] User usuario)
     {
         if (!UserRoleExtensions.IsValidRole(usuario.UserRole.GetDescription()))
-            return BadRequest($"Rol inválido. Usa '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'.");
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = $"Rol inválido. Usa '{UserRole.Admin.GetDescription()}' o '{UserRole.Student.GetDescription()}'.",
+                Data = null,
+                Errors = new[] { "Rol inválido." }
+            });
 
         _context.Users.Add(usuario);
         _context.SaveChanges();
-        return Ok(new { mensaje = "Usuario registrado", usuario.Name, role = usuario.UserRole.GetDescription() });
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Usuario registrado.",
+            Data = new { usuario.Name, role = usuario.UserRole.GetDescription() },
+            Errors = null
+        });
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest login)
+    public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest login)
     {
-        login.Email = "admin@demo.com";
-        login.Password = "admin123";
+        //login.Email = "admin@demo.com";
+        //login.Password = "admin123";
 
-
-
-        //login.Email = "student2@demo.com";
-        //login.Password = "student123";
-
+        login.Email = "student2@demo.com";
+        login.Password = "student123";
 
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return BadRequest(new ApiResponse<LoginResponse>
+            {
+                Success = false,
+                Message = "Datos de entrada inválidos.",
+                Data = null,
+                Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
+            });
 
         var user = await _context.Users
             .FirstOrDefaultAsync(u =>
                 u.Email == login.Email &&
-                u.Password == login.Password); // ⚠️ Considera usar contraseña encriptada en producción
+                u.Password == login.Password);
 
         if (user == null)
-            return Unauthorized(new { mensaje = "Credenciales incorrectas" });
+            return Unauthorized(new ApiResponse<LoginResponse>
+            {
+                Success = false,
+                Message = "Credenciales incorrectas.",
+                Data = null,
+                Errors = new[] { "Usuario o contraseña incorrectos." }
+            });
 
         var token = _jwt.GenerateToken(user.Id, user.Name, user.UserRole.GetDescription());
 
-        return Ok(new LoginResponse
+        return Ok(new ApiResponse<LoginResponse>
         {
-            Token = token,
-            Role = user.UserRole.GetDescription()
+            Success = true,
+            Message = "Inicio de sesión exitoso.",
+            Data = new LoginResponse
+            {
+                Token = token,
+                Role = user.UserRole.GetDescription()
+            },
+            Errors = null
         });
     }
 }
