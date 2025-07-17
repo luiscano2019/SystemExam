@@ -52,22 +52,22 @@ namespace SystemExamWeb.Controllers
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<IEnumerable<CategoryResponse>>>(json, new JsonSerializerOptions
+                    var apiResponse = JsonSerializer.Deserialize<ApiResponse<IEnumerable<Category>>>(json, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     });
-                    model.Categories = apiResponse?.Data?.ToList() ?? new List<CategoryResponse>();
+                    model.Categories = apiResponse?.Data?.ToList() ?? new List<Category>();
                 }
                 else
                 {
                     errorMessages.Add($"Error al obtener categorías: {response.StatusCode} - {response.ReasonPhrase}");
-                    model.Categories = new List<CategoryResponse>();
+                    model.Categories = new List<Category>();
                 }
             }
             catch (Exception ex)
             {
                 errorMessages.Add($"Excepción: {ex.Message}");
-                model.Categories = new List<CategoryResponse>();
+                model.Categories = new List<Category>();
             }
 
             return View(model);

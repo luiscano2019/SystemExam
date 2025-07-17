@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Examen finalizado";
+    var details = ViewBag.FinishDetails;
+}
+
+<div class="container mt-5">
+    <div class="alert alert-success text-center">
+        <h2>¡Examen finalizado!</h2>
+        <p>Gracias por completar el examen. Tus respuestas han sido guardadas.</p>
+        @if (details != null)
+        {
+            <div class="mt-4">
+                <h4>Resultados:</h4>
+                <ul class="list-group list-group-flush d-inline-block text-start">
+                    <li class="list-group-item"><strong>Puntaje:</strong> @details.score</li>
+                    <li class="list-group-item"><strong>Puntos obtenidos:</strong> @details.earnedPoints</li>
+                    <li class="list-group-item"><strong>Puntos totales:</strong> @details.totalPoints</li>
+                    <li class="list-group-item"><strong>Estado:</strong> @details.status</li>
+                    <li class="list-group-item"><strong>Finalizado en:</strong> @details.completedAt</li>
+                </ul>
+            </div>
+        }
+        <a href="@Url.Action("Index", "Exams")" class="btn btn-primary mt-3">Volver a mis exámenes</a>
+    </div>
+</div> 

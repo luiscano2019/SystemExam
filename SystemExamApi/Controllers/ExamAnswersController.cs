@@ -89,10 +89,16 @@ public class ExamAnswersController : ControllerBase
             return BadRequest(new ApiResponse<ExamAnswerResponse>
             {
                 Success = false,
-                Message = "Datos de entrada inválidos.",
+                Message = "Datos de entrada invï¿½lidos.",
                 Data = null,
                 Errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)
             });
+
+        // Eliminar respuestas anteriores para la misma pregunta e intento
+        var previousAnswers = _context.ExamAnswers
+            .Where(a => a.AttemptId == request.AttemptId && a.QuestionId == request.QuestionId);
+        _context.ExamAnswers.RemoveRange(previousAnswers);
+        await _context.SaveChangesAsync();
 
         var answer = new ExamAnswer
         {
@@ -100,8 +106,8 @@ public class ExamAnswersController : ControllerBase
             AttemptId = request.AttemptId,
             QuestionId = request.QuestionId,
             SelectedOptions = request.SelectedOptions,
-            IsCorrect = false, // Lógica de corrección puede ir aquí
-            PointsEarned = 0,  // Lógica de puntaje puede ir aquí
+            IsCorrect = false, // Lgica de correccin puede ir aqu
+            PointsEarned = 0,  // Lgica de puntaje puede ir aqu
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

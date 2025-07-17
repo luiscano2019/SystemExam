@@ -1,7 +1,7 @@
-
+@model SystemExamWeb.Models.DashboardViewModel
 
 <div class="dashboard-container">
-@*     <div class="dashboard-header">
+    @*     <div class="dashboard-header">
         <img src="~/images/profile.png" alt="Perfil" class="profile-img" />
         <div>
             <h1>Bienvenido, @Model.UserName</h1>
@@ -16,7 +16,7 @@
 
 
 
-   @*  <div class="dashboard-main">
+    @*  <div class="dashboard-main">
         <div class="dashboard-progress">
             <span>Exámenes</span>
             <div class="progress-circle">
@@ -52,11 +52,52 @@
             @foreach (var category in Model.Categories)
             {
                 <li>
-                    <strong>@category.Name</strong> - @category.Description
+                    <strong>@category.Id </strong>
                 </li>
             }
         </ul>
     </div>
 
+</div>
+
+
+
+
+<div class="row gy-4">
+    <div class="col-xxl-12">
+        <div class="row gy-4">
+            @foreach (var category in Model.Categories)
+            {
+                <div class="col-xxl-4 col-sm-6">
+                    <div class="card p-3 shadow-2 radius-8 border input-form-light h-100 bg-gradient-end-1">
+
+                        <a href="@Url.Action("Index", "Exams", new { categoryId = category.Id })" style="text-decoration:none; color:inherit;">
+                        <div class="card-body p-0" @category.Id>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8">
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="mb-0 w-48-px h-48-px bg-primary-600 flex-shrink-0 text-white d-flex justify-content-center align-items-center rounded-circle h6 mb-0">
+                                        <iconify-icon icon="mingcute:user-follow-fill" class="icon"></iconify-icon>
+                                    </span>
+                                    <div>
+                                        <span class="mb-2 fw-medium text-secondary-light text-sm">
+                                                <strong>@category.Name</strong> - @category.Description - @category.Id
+                                        </span>
+                                        <h6 class="fw-semibold">15,000</h6>
+                                    </div>
+                                </div>
+
+                                <div id="new-user-chart" class="remove-tooltip-title rounded-tooltip-value"></div>
+                            </div>
+                            <p class="text-sm mb-0">Increase by <span class="bg-success-focus px-1 rounded-2 fw-medium text-success-main text-sm">+200</span> this week</p>
+                        </div>
+                        </a> 
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
 </div>
 

@@ -238,4 +238,57 @@ public class QuestionController : ControllerBase
             Errors = null
         });
     }
+
+    [HttpGet("by-exam/{examId}")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<QuestionResponse>>>> GetQuestionsByExam(Guid examId)
+    {
+        var questions = await _context.Questions
+            .Where(q => q.ExamId == examId)
+            .Include(q => q.QuestionOptions)
+            .OrderBy(q => q.OrderNumber)
+            .AsNoTracking()
+            .ToListAsync();
+
+        if (!questions.Any())
+        {
+            return NotFound(new ApiResponse<IEnumerable<QuestionResponse>>
+            {
+                Success = false,
+                Message = "No se encontraron preguntas para el examen especificado.",
+                Data = null,
+                Errors = new[] { "No existen preguntas para el Id de examen proporcionado." }
+            });
+        }
+
+        var response = questions.Select(question => new QuestionResponse
+        {
+            Id = question.Id,
+            ExamId = question.ExamId,
+            Text = question.Text,
+            Type = question.Type,
+            Points = question.Points,
+            OrderNumber = question.OrderNumber,
+            Explanation = question.Explanation,
+            IsActive = question.IsActive,
+            CreatedAt = question.CreatedAt,
+            UpdatedAt = question.UpdatedAt,
+            Options = question.QuestionOptions.Select(opt => new QuestionOptionResponse
+            {
+                Id = opt.Id,
+                Text = opt.Text,
+                IsCorrect = opt.IsCorrect,
+                OrderNumber = opt.OrderNumber,
+                CreatedAt = opt.CreatedAt,
+                UpdatedAt = opt.UpdatedAt
+            }).ToList()
+        });
+
+        return Ok(new ApiResponse<IEnumerable<QuestionResponse>>
+        {
+            Success = true,
+            Message = "Preguntas obtenidas correctamente.",
+            Data = response,
+            Errors = null
+        });
+    }
 } 

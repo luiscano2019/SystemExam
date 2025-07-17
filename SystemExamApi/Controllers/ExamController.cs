@@ -59,7 +59,7 @@ public class ExamController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<ExamResponse>>> CreateExam([FromBody] CreateExamRequest request)
     {
         if (!ModelState.IsValid)
@@ -153,7 +153,6 @@ public class ExamController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<object>>> UpdateExam(Guid id, [FromBody] UpdateExamRequest request)
     {
         if (!ModelState.IsValid)
@@ -210,7 +209,6 @@ public class ExamController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<object>>> DeleteExam(Guid id)
     {
         var exam = await _context.Exams.FirstOrDefaultAsync(e => e.Id == id);
