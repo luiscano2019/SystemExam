@@ -1,8 +1,10 @@
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using SystemExamApi.Models;
 using SystemExamApi.Responses;
@@ -25,6 +27,7 @@ namespace SystemExamApi.Controllers
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<User>>>> GetUsers()
         {
+
             try
             {
                 var users = await _context.Users.ToListAsync();

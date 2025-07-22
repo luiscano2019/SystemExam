@@ -51,11 +51,11 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponse<LoginResponse>>> Login([FromBody] LoginRequest login)
     {
-        //login.Email = "admin@demo.com";
-        //login.Password = "admin123";
+        login.Email = "admin@demo.com";
+        login.Password = "admin123";
 
-        login.Email = "student2@demo.com";
-        login.Password = "student123";
+        //login.Email = "student2@demo.com";
+        //login.Password = "student123";
 
         if (!ModelState.IsValid)
             return BadRequest(new ApiResponse<LoginResponse>

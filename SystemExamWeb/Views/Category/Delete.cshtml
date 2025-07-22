@@ -1,0 +1,9 @@
+@model SystemExamWeb.Models.Category
+
+<h2>Eliminar Categoría</h2>
+<p>¿Estás seguro que deseas eliminar la categoría <strong>@Model.Name</strong>?</p>
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form> 

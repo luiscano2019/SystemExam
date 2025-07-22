@@ -5,6 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SystemExamWeb.Models;
 
+public enum UserRoleEnum
+{
+    Admin = 1,
+    Student = 2
+}
+
 public partial class User
 {
     public Guid Id { get; set; }
@@ -23,8 +29,8 @@ public partial class User
 
     public string? Address { get; set; }
 
-    //[Column("Role")]
-    //public UserRole UserRole { get; set; }
+    [Column("userRole")]
+    public UserRoleEnum UserRole { get; set; }
 
     //// .Propiedad calculada para compatibilidad con JSON - NO mapeada a BD
     //[NotMapped]

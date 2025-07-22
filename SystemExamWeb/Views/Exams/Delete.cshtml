@@ -1,0 +1,9 @@
+@model SystemExamWeb.Models.Exam
+
+<h2>Eliminar Examen</h2>
+<p>¿Estás seguro que deseas eliminar el examen <strong>@Model.Title</strong>?</p>
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form> 

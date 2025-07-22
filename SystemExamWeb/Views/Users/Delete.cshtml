@@ -1,0 +1,9 @@
+@model SystemExamWeb.Models.User
+
+<h2>Eliminar Usuario</h2>
+<p>¿Estás seguro que deseas eliminar a <strong>@Model.Name</strong>?</p>
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form> 

@@ -1,0 +1,29 @@
+@model IEnumerable<SystemExamWeb.Models.Category>
+
+<h2>Categorías</h2>
+<a asp-action="Create" class="btn btn-primary">Nueva Categoría</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Color</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var cat in Model)
+    {
+        <tr>
+            <td>@cat.Name</td>
+            <td>@cat.Description</td>
+            <td>@cat.Color</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@cat.Id" class="btn btn-sm btn-warning">Editar</a>
+                <a asp-action="Details" asp-route-id="@cat.Id" class="btn btn-sm btn-info">Detalles</a>
+                <a asp-action="Delete" asp-route-id="@cat.Id" class="btn btn-sm btn-danger">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table> 
